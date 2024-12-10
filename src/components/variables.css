@@ -1,0 +1,18 @@
+
+:root {
+    --primary-color: #00ff99;
+    --background-color: #1a1a1a;
+    --secondary-background-color: #0d0d0d;
+    --text-color: #e6e6e6;
+    --button-background-color: #333;
+
+    --border-radius: 0.5em;
+    --padding: 1em;
+    --margin-bottom: 0.625em;
+
+    --font-family: 'Courier New', Courier, monospace;
+    --transition-duration: 0.3s;
+
+    --box-shadow: 0 0.5em 1em rgba(0, 0, 0, 0.5);
+    --glow-shadow: 0 0 1em rgba(0, 255, 153, 0.5);
+}
