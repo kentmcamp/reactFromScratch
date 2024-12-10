@@ -156,17 +156,119 @@
 
 - Run and server with `npx webpack-dev-server --mode development`
 
-## Hot-reloading with react-hot-reloader
+## Make a shortcut to run server
 
-## Meet the sample app
+- In `package.json` , in the `"scripts"` section, add the following: `"dev": "npx webpack-dev-server --mode development",`
+- Now we can run the server with just `npm run dev`
+- You can also set up your build code to with `"build": "npx webpack --mode development",` and run with `npm run build`
 
 ## Creating the `todoList` component
 
+- Create a `components` folder.
+    - `TodoList.js`
+
+        ```jsx
+        import React from "react";
+        import ToDoListItem from  './TodoListItem';
+
+        const TodoList = ({ todos }) => {
+            <div className="list-wrapper">
+                {todos.map(todo => <TodoListItem todo={todo} />)}
+            </div>
+        };
+
+        export default TodoList;
+        ```
+
+
 ## Creating the `todoListItem` component
+
+- `TodoListItem.js`
+
+    ```jsx
+    import React from "react";
+
+    const TodoListItem = ({todo}) => (
+        <div className="todo-item-container">
+            <h3>{todo.text}</h3>
+            <div className="buttons-container">
+                <button className="completed-button">Mark As Completed</button>
+                <button className="remove-button">Remove</button>
+            </div>
+        </div>
+    )
+
+    export default TodoListItem;
+    ```
+
 
 ## Creating the `newTodoForm` component
 
+- `newTodoForm.j`
+
+    ```jsx
+    import React, { useState } from "react";
+    import './NewTodoForm.css';
+
+    const NewTodoForm = () => {
+      const [inputValue, setInputValue] = useState("");
+
+      return (
+        <div className="new-todo-form">
+          <input
+            className="new-todo-input"
+            type="text"
+            placeholder="Enter New Todo Here!"
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+          />
+          <button className="new-todo-button">Create Todo</button>
+        </div>
+      );
+    };
+
+    export default NewTodoForm;
+    ```
+
+- Also create and import relevant CSS files for all three components.
+
 ## Putting the app together
+
+- `App.js`
+
+    ```jsx
+    import React from 'react';
+    import TodoList from './components/TodoList';
+    import './App.css';
+
+    const App = () => (
+        <div className="App">
+            <TodoList/>
+        </div>
+    );
+
+    export default App;
+    ```
+
+- Updates to `TodoList.js`
+
+    ```jsx
+    import React from "react";
+    import NewTodoForm from "./NewTodoForm";
+    import TodoListItem from "./TodoListItem";
+    import './TodoList.css'
+
+    const TodoList = ({ todos = [{text: "hello"}] }) => (
+        <div className="list-wrapper">
+            <NewTodoForm/>
+            {todos.map(todo => <TodoListItem todo={todo} />)}
+        </div>
+    );
+
+    export default TodoList;
+    ```
+
+    - The `todos` property it just to test how saved To-dos will be displayed since none are currently saved.
 
 # Adding Redux
 

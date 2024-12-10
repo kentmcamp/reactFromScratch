@@ -1,0 +1,35 @@
+.todo-item-container {
+    background-color: #1a1a1a;
+    border: 2px solid #00ff99;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 10px;
+    color: #e6e6e6;
+    font-family: 'Courier New', Courier, monospace;
+}
+
+.todo-item-container h3 {
+    margin: 0;
+    color: #00ff99;
+}
+
+.buttons-container {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+}
+
+.completed-button, .remove-button {
+    background-color: #333;
+    border: 2px solid #00ff99;
+    border-radius: 4px;
+    color: #00ff99;
+    padding: 8px 16px;
+    cursor: pointer;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.completed-button:hover, .remove-button:hover {
+    background-color: #00ff99;
+    color: #1a1a1a;
+}
