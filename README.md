@@ -452,9 +452,6 @@
     export default connect(mapStateToProps, mapDispatchToProps)(NewTodoForm);
     ```
 
-
-## Running a React-Redux application
-
 - `TodoList.js`
 
     ```jsx
@@ -508,9 +505,232 @@
 
 ## Persisting the Redux store
 
+- `npm install redux-persist`
+- `store.js`
+
+    ```jsx
+    import { createStore, combineReducers } from 'redux';
+    import { persistReducer } from 'redux-persist';
+    import storage from 'redux-persist/lib/storage';
+    import autoMergeLevel2 from 'redux-persist/lib/stateReconciler/autoMergeLevel2';
+    import { todos } from './components/reducers';
+
+    const reducers = {
+        todos,
+    };
+
+    const persistConfig = {
+        key: 'root',
+        storage,
+        stateReconciler: autoMergeLevel2,
+    };
+
+    // The root reducer puts all of the reducers together into a form that we can pass to the createStore function.
+    const rootReducer = combineReducers(reducers);
+    const persistedReducer = persistReducer(persistConfig, rootReducer);
+    export const configureStore = () => createStore(persistedReducer);
+    ```
+
+- `index.js`
+
+    ```jsx
+    import React from 'react';
+    import ReactDOM from 'react-dom/client';
+    import { persistStore } from 'redux-persist';
+    import { PersistGate } from 'redux-persist/lib/integration/react';
+    import { Provider } from 'react-redux';
+    import { configureStore } from './store.js';
+    import App from './App.js';
+
+    const store = configureStore();
+    const persistor = persistStore(store);
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(
+        <Provider store={store}>
+            <PersistGate
+                loading={<div>Loading...</div>}
+                persistor={persistor}>
+                <App />
+            </PersistGate>
+        </Provider>
+    );
+    ```
+
+- To clear `localStorage`, open dev tools. Click `Application` tab. Open the dev server under `Local Storage` and delete the persisted data.
+
 ## Redux DevTools
 
+[Redux DevTools - Chrome Web Store](https://chromewebstore.google.com/detail/redux-devtools/lmhkpmbekcpmknklioeibfkpmmfibljd?hl=en)
+
+- `store.js`
+
+    ```jsx
+    export const configureStore = () => createStore(
+        persistedReducer,
+        window.__REDUX_DEVTOOLS_EXTENSION__ &&
+        window.__REDUX_DEVTOOLS_EXTENSION__()
+    );
+    ```
+
+- Now you can use the Redux extensions for direct, easy access to the store and ability to dispatch to it.
+    - You might need to restart your browser for it to be available with the other developer tools.
+
 ## Redux Best Practices
+
+- **Exporting both connected and unconnected versions of components**
+    - When connecting components to the Redux Store, export both the connected and unconnected versions of the component.
+    - The **connected version** is what you use in the application to interact with the Redux state and dispatch actions.
+    - The **unconnected version** is useful for testing the component in isolation, without the Redux Store, by allowing you to directly pass props.
+
+    **Example:**
+
+    ```jsx
+    javascript
+    Copy code
+    export const MyComponent = (props) => {
+        // Component implementation
+        return <div>{props.someProp}</div>;
+    };
+
+    export default connect(mapStateToProps, mapDispatchToProps)(MyComponent);
+
+    ```
+
+    - This approach ensures better testability while maintaining a clean connection to the Redux Store.
+- **Avoid triggering actions or performing asynchronous operations in reducers**
+    - Reducers are pure functions: their sole responsibility is to compute the next state based on the current state and the action.
+    - Triggering side effects (like dispatching actions or making API calls) violates the principle of immutability and predictability in Redux.
+
+    **Clarification:**
+
+    - Asynchronous operations and side effects should be handled in **middleware** like `redux-thunk` or `redux-saga`.
+    - Example of a middleware approach using `redux-thunk`:
+
+        ```jsx
+        javascript
+        Copy code
+        export const fetchData = () => async (dispatch) => {
+            const data = await fetch('https://api.example.com/data').then((res) => res.json());
+            dispatch({ type: 'DATA_LOADED', payload: data });
+        };
+
+        ```
+
+    - Reducer:
+
+        ```jsx
+        javascript
+        Copy code
+        const myReducer = (state = initialState, action) => {
+            switch (action.type) {
+                case 'DATA_LOADED':
+                    return { ...state, data: action.payload };
+                default:
+                    return state;
+            }
+        };
+
+        ```
+
+- **Consideration of which components to connect to the Redux Store**
+    - Connecting too many components directly to the Redux Store can reduce their reusability, as their behavior becomes tied to specific pieces of the Redux state.
+    - It's often better to connect higher-level "container" components and pass the necessary data and actions as props to child components.
+
+    **Example:**
+
+    ```jsx
+    javascript
+    Copy code
+    const mapStateToProps = (state) => ({
+        items: state.items,
+    });
+
+    const MyConnectedContainer = ({ items }) => {
+        return (
+            <div>
+                {items.map((item) => (
+                    <MyChildComponent key={item.id} item={item} />
+                ))}
+            </div>
+        );
+    };
+
+    export default connect(mapStateToProps)(MyConnectedContainer);
+
+    // MyChildComponent is decoupled from Redux and reusable elsewhere:
+    const MyChildComponent = ({ item }) => <div>{item.name}</div>;
+
+    ```
+
+    - This separation ensures child components remain reusable across contexts.
+
+## Adding a Redux Flow
+
+- `action.js`
+
+    ```jsx
+    export const MARK_TODO_AS_COMPLETED = 'MARK_TODO_AS_COMPLETED';
+    export const markTodoAsCompleted = text => ({
+        type: MARK_TODO_AS_COMPLETED,
+        payload: { text },
+    })
+    ```
+
+- `reducers.js`
+
+    ```jsx
+    import { MARK_TODO_AS_COMPLETED } from "./actions";
+
+    case MARK_TODO_AS_COMPLETED: {
+      const { text } = payload;
+      return state.map(todo => {
+        if (todo.text === text) {
+          return { ...todo, isCompleted: true };
+        }
+      return todo;
+    })
+    ```
+
+- `TodoList.js`
+
+    ```jsx
+    import { removeTodo, markTodoAsCompleted } from "./actions";
+
+    const TodoList = ({ todos = [], onRemovePressed, onCompletedPressed }) => (
+      <div className="list-wrapper">
+        <NewTodoForm />
+        {todos.map((todo, index) => (
+          <TodoListItem
+            key={index}
+            todo={todo}
+            onRemovePressed={onRemovePressed}
+            onCompletedPressed={onCompletedPressed}
+          />
+        ))}
+      </div>
+    );
+
+    const mapDispatchToProps = (dispatch) => ({
+      onRemovePressed: (text) => dispatch(removeTodo(text)),
+      onCompletedPressed: (text) => dispatch(markTodoAsCompleted(text)),
+    });
+    ```
+
+- `TodoListItem.js`
+
+    ```jsx
+    const TodoListItem = ({todo, onRemovePressed, onCompletedPressed}) => (
+        <div className="todo-item-container">
+            <h3>{todo.text}</h3>
+            <div className="buttons-container">
+                {todo.isCompleted
+                    ? null
+                    : <button
+                        onClick={() => onCompletedPressed(todo.text)}
+                        className="completed-button">Mark As Completed</button>}
+    ```
+
 
 # Dealing with Side Effects
 
