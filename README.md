@@ -1137,13 +1137,217 @@
 
 ## Why do you need Selectors
 
+- `Selectors` give us a place to put logic for combining, filtering, and transforming stored data into data our components can use.
+
 ## Creating Selectors
+
+- Create `selectors.js` in components directory.
+- `selectors.js`
+
+    ```jsx
+    export const getTodos = state => state.todos.data;
+    export const getTodosLoading = state => state.todos.isLoading;
+    ```
+
+- `TodoList.js`
+
+    ```jsx
+    import { getTodos, getTodosLoading } from "./selectors";
+
+    const mapStateToProps = state => ({
+        isLoading: getTodosLoading(state),
+        todos: getTodos(state),
+    });
+    ```
+
+- `NewTodoForm.js`
+
+    ```jsx
+    import { getTodos } from "./selectors";
+
+    const mapStateToProps = state => ({
+      todos: getTodos(state),
+    });
+    ```
+
+- `reducers.js`
+
+    ```jsx
+    import {
+      CREATE_TODO,
+      REMOVE_TODO,
+      MARK_TODO_AS_COMPLETED,
+      LOAD_TODOS_IN_PROGRESS,
+      LOAD_TODOS_SUCCESS,
+      LOAD_TODOS_FAILURE,
+    } from "./actions";
+
+    const initialState = { isLoading: false, data: [] };
+
+    export const todos = (state = [initialState], action) => {
+      const { type, payload } = action;
+
+      switch (type) {
+        case CREATE_TODO: {
+          const { todo } = payload;
+          return {
+            ...state,
+            data: state.data.concat(todo),
+          };
+        }
+        case REMOVE_TODO: {
+          const { todo: todoToRemove } = payload;
+          return {
+            ...state,
+            data: state.data.filter((todo) => todo.id !== todoToRemove.id),
+          };
+        }
+        case MARK_TODO_AS_COMPLETED: {
+          const { todo: updatedTodo } = payload;
+          return {
+            ...state,
+            data: state.data.map((todo) => {
+              if (todo.id === updatedTodo.id) {
+                return updatedTodo;
+              }
+              return todo;
+            }),
+          };
+        }
+        case LOAD_TODOS_SUCCESS: {
+          const { todos } = payload;
+          return {
+            ...state,
+            isLoading: false,
+            data: todos,
+          };
+        }
+        case LOAD_TODOS_IN_PROGRESS:
+          return {
+            ...state,
+            isLoading: true,
+          };
+        case LOAD_TODOS_FAILURE:
+          return {
+            ...state,
+            isLoading: false,
+          };
+        default:
+          return state;
+      }
+    };
+
+    ```
+
+- `store.js`
+
+    ```jsx
+    // Remove isLoading import and use in reducer's object.
+    import { todos } from "./components/reducers";
+
+    const reducers = {
+      todos,
+    };
+    ```
+
 
 ## Combining Selectors with Reselect
 
+- `Selectors` help `components` be separated from the exact structure of data in our `Redux store`. Now we will use them to give us a place to put the logic necessary for transforming bare Redux data into more specific data for our `components`
+- When you need `Selectors` to make use of other `Selectors` we can use a tool called `Reselect`
+    - `npm install reselect`
+- `selectors.js`
+
+    ```jsx
+    import { createSelector } from "reselect";
+
+    export const getIncompleteTodos = createSelector(
+        getTodos,
+        (todos) => todos.filter(todo =>!todo.isCompleted),
+    );
+    ```
+
+
 ## More about Selectors
 
+- `selector.js`
+
+    ```jsx
+    export const getCompletedTodos = createSelector(
+        getTodos,
+        (todos) => todos.filter(todo => todo.isCompleted),
+    );
+    ```
+
+- The difference between the above using the `createSelector()` method and this…
+
+    ```jsx
+    export const getCompletedTodos = state => {
+    	const { data: todos } = state.todos;
+    	return todos.filter(todo => todo.isCompleted);
+    }
+    ```
+
+    - …is that using a normal function will re-compute every time our app re-renders, even if the input and output are exactly the same.
+    - When we use `createSelector()`, the return value of this function only changes when the return value of the selectors that we pass as arguments change.
+
 ## Adding Selectors to Components
+
+- `TodoList.js`
+
+    ```jsx
+    import { loadTodos, removeTodoRequest, markTodoAsCompletedRequest } from "./thunks";
+
+    const TodoList = ({ completedTodos, incompleteTodos, onRemovePressed, onCompletedPressed, isLoading, startLoadingTodos }) => {
+        useEffect(() => {
+            startLoadingTodos();
+        }, [startLoadingTodos]);
+
+        if (isLoading) {
+            return <div>Loading...</div>;
+        }
+
+        return (
+            <div className="list-wrapper">
+                <NewTodoForm />
+                <h3>Incomplete:</h3>
+                {incompleteTodos.map(todo => (
+                    <TodoListItem
+                        key={todo.id}
+                        todo={todo}
+                        onRemovePressed={onRemovePressed}
+                        onCompletedPressed={onCompletedPressed}
+                    />
+                ))}
+                <h3>Completed:</h3>
+                {completedTodos.map(todo => (
+                    <TodoListItem
+                        key={todo.id}
+                        todo={todo}
+                        onRemovePressed={onRemovePressed}
+                        onCompletedPressed={onCompletedPressed}
+                    />
+                ))}
+            </div>
+        );
+    };
+
+    const mapStateToProps = state => ({
+        isLoading: getTodosLoading(state),
+        completedTodos: getCompletedTodos(state),
+        incompleteTodos: getIncompleteTodos(state),
+    });
+
+    const mapDispatchToProps = dispatch => ({
+        startLoadingTodos: () => dispatch(loadTodos()),
+        onRemovePressed: id => dispatch(removeTodoRequest(id)),
+        onCompletedPressed: id => dispatch(markTodoAsCompletedRequest(id)),
+    });
+
+    export default connect(mapStateToProps, mapDispatchToProps)(TodoList);
+
+    ```
+
 
 # Styled-Components
 
@@ -1151,11 +1355,87 @@
 
 ## Creating a Styled-Component
 
+-
+
+    ```jsx
+
+    ```
+
+-
+
+    ```jsx
+
+    ```
+
+-
+
+    ```jsx
+
+    ```
+
+
 ## Converting CSS modules to Styled-Components
+
+-
+
+    ```jsx
+
+    ```
+
+-
+
+    ```jsx
+
+    ```
+
+-
+
+    ```jsx
+
+    ```
+
 
 ## Passing props to Styled-Components
 
+-
+
+    ```jsx
+
+    ```
+
+-
+
+    ```jsx
+
+    ```
+
+-
+
+    ```jsx
+
+    ```
+
+
 ## Extending Styled-Components
+
+-
+
+    ```jsx
+
+    ```
+
+-
+
+    ```jsx
+
+    ```
+
+-
+
+    ```jsx
+
+    ```
+
 
 # Testing
 
