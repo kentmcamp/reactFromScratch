@@ -582,20 +582,19 @@
     - When connecting components to the Redux Store, export both the connected and unconnected versions of the component.
     - The **connected version** is what you use in the application to interact with the Redux state and dispatch actions.
     - The **unconnected version** is useful for testing the component in isolation, without the Redux Store, by allowing you to directly pass props.
+    - **Example:**
 
-    **Example:**
+        ```jsx
+        javascript
+        Copy code
+        export const MyComponent = (props) => {
+            // Component implementation
+            return <div>{props.someProp}</div>;
+        };
 
-    ```jsx
-    javascript
-    Copy code
-    export const MyComponent = (props) => {
-        // Component implementation
-        return <div>{props.someProp}</div>;
-    };
+        export default connect(mapStateToProps, mapDispatchToProps)(MyComponent);
 
-    export default connect(mapStateToProps, mapDispatchToProps)(MyComponent);
-
-    ```
+        ```
 
     - This approach ensures better testability while maintaining a clean connection to the Redux Store.
 - **Avoid triggering actions or performing asynchronous operations in reducers**
@@ -608,8 +607,6 @@
     - Example of a middleware approach using `redux-thunk`:
 
         ```jsx
-        javascript
-        Copy code
         export const fetchData = () => async (dispatch) => {
             const data = await fetch('https://api.example.com/data').then((res) => res.json());
             dispatch({ type: 'DATA_LOADED', payload: data });
@@ -620,8 +617,6 @@
     - Reducer:
 
         ```jsx
-        javascript
-        Copy code
         const myReducer = (state = initialState, action) => {
             switch (action.type) {
                 case 'DATA_LOADED':
@@ -636,32 +631,28 @@
 - **Consideration of which components to connect to the Redux Store**
     - Connecting too many components directly to the Redux Store can reduce their reusability, as their behavior becomes tied to specific pieces of the Redux state.
     - It's often better to connect higher-level "container" components and pass the necessary data and actions as props to child components.
+    - **Example:**
 
-    **Example:**
+        ```jsx
+        const mapStateToProps = (state) => ({
+            items: state.items,
+        });
 
-    ```jsx
-    javascript
-    Copy code
-    const mapStateToProps = (state) => ({
-        items: state.items,
-    });
+        const MyConnectedContainer = ({ items }) => {
+            return (
+                <div>
+                    {items.map((item) => (
+                        <MyChildComponent key={item.id} item={item} />
+                    ))}
+                </div>
+            );
+        };
 
-    const MyConnectedContainer = ({ items }) => {
-        return (
-            <div>
-                {items.map((item) => (
-                    <MyChildComponent key={item.id} item={item} />
-                ))}
-            </div>
-        );
-    };
+        export default connect(mapStateToProps)(MyConnectedContainer);
 
-    export default connect(mapStateToProps)(MyConnectedContainer);
-
-    // MyChildComponent is decoupled from Redux and reusable elsewhere:
-    const MyChildComponent = ({ item }) => <div>{item.name}</div>;
-
-    ```
+        // MyChildComponent is decoupled from Redux and reusable elsewhere:
+        const MyChildComponent = ({ item }) => <div>{item.name}</div>;
+        ```
 
     - This separation ensures child components remain reusable across contexts.
 
@@ -736,19 +727,209 @@
 
 ## Why do you need Redux Thunk
 
+- `Redux Thunk` is a Side-Effect Library. Others include Redux Saga and Redux Logic.
+- `Side Effects` are logic for doing asynchronous operations, such as fetching and updating server data.
+- Just like how `Redux` takes the concern for **State Management** from the component, `Thunk` does this for `Side Effects`.
+
 ## How does Redux Thunk work
+
+- Components trigger actions that cause predictable changes to the data in our `Redux Store`, then these changes are reflected in our components.
+- `Redux Thunk` allows us to put a fork in this loop that allows us to load `Side Effects`, such as loading data or some other asynchronous operation.
+- Normally, a `Component` dispatch a `Redux Action`, which goes to the `Reducer` and makes the relevant changes to the `Store`.
+    - Or, our `Component` dispatch a `Thunk` that performs whatever async or conditional operations we want, then dispatches it’s own `Redux Action` based on the result of those operations.
+- So instead of dispatching a `Redux Action`, we pass a function to dispatch, and this function is where we put the async operation. You can even dispatch other `Thunks` from inside that function.
 
 ## Adding Redux Thunk to React
 
-## Creating a Thunk
+- `npm install redux-thunk redux-devtools-extension @babel/runtime`
+- `npm install --save-dev @babel/plugin-transform-runtime`
+- `.babelrc`
+
+    ```jsx
+    {
+        "presets": ["@babel/preset-env", "@babel/preset-react"],
+        "plugins": ["@babel/plugin-transform-runtime"]
+    }
+    ```
+
+- `store.js`
+
+    ```jsx
+    import { createStore, combineReducers, applyMiddleware } from "redux";
+    import { persistReducer } from "redux-persist";
+    import storage from "redux-persist/lib/storage";
+    import autoMergeLevel2 from "redux-persist/lib/stateReconciler/autoMergeLevel2";
+    import thunk from "redux-thunk";
+    import { composeWithDevTools } from "redux-devtools-extension";
+    import { todos } from "./components/reducers";
+
+    const reducers = {
+      todos,
+    };
+
+    const persistConfig = {
+      key: "root",
+      storage,
+      stateReconciler: autoMergeLevel2,
+    };
+
+    // The root reducer puts all of the reducers together into a form that we can pass to the createStore function.
+    const rootReducer = combineReducers(reducers);
+    const persistedReducer = persistReducer(persistConfig, rootReducer);
+    export const configureStore = () => createStore(
+        persistedReducer,
+        composeWithDevTools(
+          applyMiddleware(thunk)
+        )
+    );
+    ```
+
 
 ## The Todos API
 
+- The following will assume a server with these APIs
+
+
+    | GET /todos | Gives us an array of all the todos |
+    | --- | --- |
+    | POST /todos | Creates a new todo with a unique id, createdAt, and isCompleted properties |
+    | POST /todos/:id/completed | Marks a todo as completed |
+    | DELETE /todos/:id | Deletes a todo |
+
 ## Async Thunks
+
+- `actions.js`
+
+    ```jsx
+    // Thunks Action Types and Creators
+    export const LOAD_TODOS_IN_PROGRESS = "LOAD_TODOS_IN_PROGRESS";
+    export const loadTodosInProgress = () => ({
+      type: LOAD_TODOS_IN_PROGRESS,
+    });
+
+    export const LOAD_TODOS_SUCCESS = "LOAD_TODOS_SUCCESS";
+    export const loadTodosSuccess = (todos) => ({
+      type: LOAD_TODOS_SUCCESS,
+      payload: { todos },
+    });
+    ```
+
+- `thunks.js`
+
+    ```jsx
+    import { loadTodosInProgress, loadTodosSuccess, loadTodosFailure } from './actions';
+
+    export const loadTodos = () => async (dispatch, getState) => {
+
+        try {
+            dispatch(loadTodosInProgress());
+            const response = await fetch('http://localhost:8080/todos');
+            const todos = await response.json();
+
+            dispatch(loadTodosSuccess(todos));
+        } catch (e) {
+            dispatch(loadTodosFailure());
+            dispatch(displayAlert(e));
+        }
+
+    }
+
+    export const displayAlert = text => () => {
+        alert(`error: ${text}`);
+    };
+    ```
+
 
 ## Adding another Reducer
 
+- `reducers.js`
+
+    ```jsx
+    import {...,
+        LOAD_TODOS_IN_PROGRESS,
+        LOAD_TODOS_SUCCESS,
+        LOAD_TODOS_FAILURE,
+     } from "./actions";
+
+     export const isLoading = (state = false, action) => {
+        const { type } = action;
+
+        switch (type) {
+            case LOAD_TODOS_IN_PROGRESS:
+                return true;
+            case LOAD_TODOS_SUCCESS:
+            case LOAD_TODOS_FAILURE:
+                return false;
+            default:
+                return state;
+        };
+     };
+    ```
+
+- `store.js`
+
+    ```jsx
+
+    import { todos, isLoading } from "./components/reducers";
+
+    const reducers = {
+      todos,
+      isLoading,
+    };
+    ```
+
+- `TodoList.js`
+
+    ```jsx
+    import React, {useEffect} from "react";
+    import { connect } from "react-redux";
+    import NewTodoForm from "./NewTodoForm";
+    import TodoListItem from "./TodoListItem";
+    import { loadTodos } from "./thunks";
+    import { removeTodo, markTodoAsCompleted } from "./actions";
+    import { isLoading } from "./reducers";
+    import "./TodoList.css";
+
+    const TodoList = ({ todos = [], onRemovePressed, onCompletedPressed, isLoading, startLoadingTodos }) => {
+
+      useEffect(() => {
+        startLoadingTodos();
+      }, []);
+
+      const loadingMessage = <div>Loading todos...</div>;
+      const content = (
+        <div className="list-wrapper">
+          <NewTodoForm />
+          {todos.map((todo, index) => (
+            <TodoListItem
+              key={index}
+              todo={todo}
+              onRemovePressed={onRemovePressed}
+              onCompletedPressed={onCompletedPressed}
+            />
+          ))}
+        </div>
+      );
+      return isLoading ? loadingMessage : content;
+    };
+
+    const mapStateToProps = (state) => ({
+      isLoading: state.isLoading,
+      todos: state.todos,
+    });
+    const mapDispatchToProps = (dispatch) => ({
+      startLoadingTodos: () => dispatch(loadTodos()),
+      onRemovePressed: (text) => dispatch(removeTodo(text)),
+      onCompletedPressed: (text) => dispatch(markTodoAsCompleted(text)),
+    });
+
+    export default connect(mapStateToProps, mapDispatchToProps)(TodoList);
+    ```
+
+
 ## Refactoring the Todos reducer
+
+-
 
 ## Using Thunks to create server resources
 
