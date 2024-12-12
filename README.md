@@ -929,11 +929,209 @@
 
 ## Refactoring the Todos reducer
 
--
+- `reducers.js`
+
+    ```jsx
+    case LOAD_TODOS_SUCCESS: {
+        const { todos } = payload;
+        return todos;
+    }
+      case LOAD_TODOS_IN_PROGRESS:
+      case LOAD_TODOS_FAILURE:
+      default:
+        return state;
+    }
+    ```
+
 
 ## Using Thunks to create server resources
 
+- `thunks.js`
+
+    ```jsx
+    import { createTodo, ... } from './actions';
+
+    export const addTodoRequest = text => async dispatch => {
+        try {
+            const body = JSON.stringify({ text });
+            const response = await fetch('http://localhost:8080/todos', {
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                method: 'post',
+                body,
+            });
+            const todo = await response.json();
+            dispatch(createTodo(todo));
+        } catch (e) {
+            dispatch(displayAlert(e));
+        }
+    }
+    ```
+
+- `actions.js`
+
+    ```jsx
+    // Change 'text' to 'todo' in createTodo()
+    export const createTodo = (todo) => ({
+      type: CREATE_TODO,
+      payload: { todo },
+    });
+    ```
+
+- `reducers.js`
+
+    ```jsx
+    // Also update the CREATE_TODO case:
+    case CREATE_TODO: {
+      const { todo } = payload;
+      return state.concat(todo);
+    }
+    ```
+
+- `NewTodoForm.js`
+
+    ```jsx
+    import { addTodoRequest } from "./thunks";
+
+    const mapDispatchToProps = dispatch => ({
+      onCreatePressed: text => dispatch(addTodoRequest(text)),
+    });
+    ```
+
+
 ## Using Thunks to delete server resources
+
+- `thunks.js`
+
+    ```jsx
+    import { removeTodo, ...} from './actions';
+
+    export const removeTodoRequest = id => async dispatch => {
+        try {
+            const response = await fetch(`http://localhost:8080/todos/${id}`, {
+                method: 'delete',
+            });
+            if (response.ok) {
+                dispatch(removeTodo({ id }));
+            } else {
+                const errorText = await response.text();
+                dispatch(displayAlert(errorText));
+            }
+        } catch (e) {
+            dispatch(displayAlert(e));
+        }
+    }
+    ```
+
+- `actions.js`
+
+    ```jsx
+    export const REMOVE_TODO = "REMOVE_TODO";
+    export const removeTodo = (todo) => ({
+      type: REMOVE_TODO,
+      payload: { todo },
+    });
+    ```
+
+- `reducers.js`
+
+    ```jsx
+        case REMOVE_TODO: {
+          const { todo: todoToRemove } = payload;
+          return state.filter(todo => todo.id !== todoToRemove.id);
+        }
+    ```
+
+- `TodoList.js`
+
+    ```jsx
+    import { loadTodos, removeTodoRequest } from "./thunks";
+
+    const mapDispatchToProps = (dispatch) => ({
+      startLoadingTodos: () => dispatch(loadTodos()),
+      onRemovePressed: (id) => dispatch(removeTodoRequest(id)),
+      onCompletedPressed: (text) => dispatch(markTodoAsCompleted(text)),
+    });
+    ```
+
+- `TodoListItem.js`
+
+    ```jsx
+    <button
+      onClick={() => onRemovePressed(todo.id)}
+      className="remove-button">
+      Remove
+    </button>
+    ```
+
+
+## Using Thunks to update server resources
+
+- `thunks.js`
+
+    ```jsx
+    import { createTodo, loadTodosInProgress, loadTodosSuccess, loadTodosFailure, removeTodo, markTodoAsCompleted } from './actions';
+
+    export const markTodoAsCompletedRequest = id => async dispatch => {
+        try {
+            const response = await fetch(`http://localhost:8080/todos/${id}/completed`, {
+                method: 'post',
+            });
+            const updatedTodo = await response.json();
+            dispatch(markTodoAsCompleted(updatedTodo));
+        } catch (e) {
+            dispatch(displayAlert(e));
+        }
+    }
+
+    ```
+
+- `actions.js`
+
+    ```jsx
+    export const MARK_TODO_AS_COMPLETED = "MARK_TODO_AS_COMPLETED";
+    export const markTodoAsCompleted = (todo) => ({
+      type: MARK_TODO_AS_COMPLETED,
+      payload: { todo },
+    });
+    ```
+
+- `reducers.js`
+
+    ```jsx
+    case MARK_TODO_AS_COMPLETED: {
+      const { todo: updatedTodo } = payload;
+      return state.map((todo) => {
+        if (todo.id === updatedTodo.id) {
+          return updatedTodo; ;
+        }
+        return todo;
+    });
+    ```
+
+- `TodoList.js`
+
+    ```jsx
+    import { loadTodos, removeTodoRequest, markTodoAsCompletedRequest } from "./thunks";
+
+    const mapDispatchToProps = dispatch => ({
+        startLoadingTodos: () => dispatch(loadTodos()),
+        onRemovePressed: id => dispatch(removeTodoRequest(id)),
+        onCompletedPressed: id => dispatch(markTodoAsCompletedRequest(id)),
+    });
+    ```
+
+- `TodoListItem.js`
+
+    ```jsx
+     <button
+        onClick={() => onCompletedPressed(todo.id)}
+        className="completed-button">
+        Mark As Completed
+      </button>
+    ```
+
 
 # Selectors
 

@@ -2,21 +2,21 @@
 export const CREATE_TODO = "CREATE_TODO";
 
 // Action Creator
-export const createTodo = (text) => ({
+export const createTodo = (todo) => ({
   type: CREATE_TODO,
-  payload: { text },
+  payload: { todo },
 });
 
 export const REMOVE_TODO = "REMOVE_TODO";
-export const removeTodo = (text) => ({
+export const removeTodo = (todo) => ({
   type: REMOVE_TODO,
-  payload: { text },
+  payload: { todo },
 });
 
 export const MARK_TODO_AS_COMPLETED = "MARK_TODO_AS_COMPLETED";
-export const markTodoAsCompleted = (text) => ({
+export const markTodoAsCompleted = (todo) => ({
   type: MARK_TODO_AS_COMPLETED,
-  payload: { text },
+  payload: { todo },
 });
 
 // Thunks Action Types and Creators
