@@ -1353,86 +1353,460 @@
 
 ## Why do you need Styled-Components
 
+- `Styled-Copmponents` allow us to define styles inside of our JavaScript files.
+
 ## Creating a Styled-Component
 
--
+- `npm install styled-components`
+- `TodoList.js`
 
     ```jsx
+    import styled from "styled-components";
 
-    ```
+    const BigRedText = styled.h1`
+        font-size: 48px;
+        color: #ff0000;
+    `;
 
--
-
-    ```jsx
-
-    ```
-
--
-
-    ```jsx
-
+    <BigRedText>TO DO LIST</BigRedText>
     ```
 
 
 ## Converting CSS modules to Styled-Components
 
--
+- If your using a base CSS template or variable list, you first need to change your variable list to a JavaScript file and object (like a JSON)
+- `variables.css`
 
     ```jsx
+    // What was originally:
+    :root {
+        --primary-color: #00ff99;
+        --background-color: #1a1a1a;
+        --secondary-background-color: #0d0d0d;
+        --text-color: #e6e6e6;
+        --button-background-color: #333;
+
+        --border-radius: 0.5em;
+        --padding: 1em;
+        --margin-bottom: 0.625em;
+
+        --font-family: 'Courier New', Courier, monospace;
+        --transition-duration: 0.3s;
+
+        --box-shadow: 0 0.5em 1em rgba(0, 0, 0, 0.5);
+        --glow-shadow: 0 0 1em rgba(0, 255, 153, 0.5);
+    }
+
+    // Gets changed to:
+    const variables = {
+        secondaryBackgroundColor: '#f0f0f0',
+        primaryColor: '#3498db',
+        borderRadius: '0.25em',
+        padding: '1em',
+        textColor: '#333',
+        fontFamily: 'Arial, sans-serif',
+        boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+    };
+
+    export default variables;
+    ```
+
+- `TodoList.js`
+    - Then import the new `variables` export from styleVariables.js, create your styled-components, and replace the original components with them.
+
+    ```jsx
+    import styled from "styled-components";
+    import variables from "./styleVariables";
+
+    const ListWrapper = styled.div`
+        background-color: ${variables.secondaryBackgroundColor};
+        border: 0.15em solid ${variables.primaryColor};
+        border-radius: ${variables.borderRadius};
+        padding: ${variables.padding};
+        max-width: 38em;
+        margin: 0 auto;
+        color: ${variables.textColor};
+        font-family: ${variables.fontFamily};
+        box-shadow: ${variables.boxShadow};
+    `;
+
+    const Section = styled.div`
+        margin-bottom: ${variables.padding};
+    `;
+
+    const Title = styled.h3`
+        background-color: ${variables.primaryColor};
+        color: ${variables.secondaryBackgroundColor};
+        padding: ${variables.padding};
+        border-radius: ${variables.borderRadius};
+    `;
+
+    const TodoList = ({ completedTodos, incompleteTodos, onRemovePressed, onCompletedPressed, isLoading, startLoadingTodos }) => {
+       ...
+
+        return (
+            <ListWrapper>
+                <NewTodoForm />
+                <Section>
+                    <Title>Incomplete:</Title>
+                    {incompleteTodos.map(todo => (
+                        <TodoListItem
+                            key={todo.id}
+                            todo={todo}
+                            onRemovePressed={onRemovePressed}
+                            onCompletedPressed={onCompletedPressed}
+                        />
+                    ))}
+                </Section>
+                <Section>
+                    <Title>Completed:</Title>
+                    {completedTodos.map(todo => (
+                        <TodoListItem
+                            key={todo.id}
+                            todo={todo}
+                            onRemovePressed={onRemovePressed}
+                            onCompletedPressed={onCompletedPressed}
+                        />
+                    ))}
+                </Section>
+            </ListWrapper>
+        );
+    };
+
+    export default connect(mapStateToProps, mapDispatchToProps)(TodoList);
+    ```
+
+- `TodoListItem.js`
+
+    ```jsx
+    import styled from "styled-components";
+    import variables from "./styleVariables";
+
+    const TodoItemContainer = styled.div`
+        background-color: ${variables.backgroundColor};
+        border: 0.15em solid ${variables.primaryColor};
+        border-radius: ${variables.borderRadius};
+        padding: ${variables.padding};
+        margin-bottom: ${variables.marginBottom};
+        color: ${variables.textColor};
+        font-family: ${variables.fontFamily};
+    `;
+
+    const TodoItemTitle = styled.h3`
+        margin: 0;
+        color: ${variables.primaryColor};
+    `;
+
+    const ButtonsContainer = styled.div`
+        display: flex;
+        justify-content: space-between;
+        margin-top: ${variables.marginBottom};
+    `;
+
+    const Button = styled.button`
+        background-color: ${variables.buttonBackgroundColor};
+        border: 0.15em solid ${variables.primaryColor};
+        border-radius: ${variables.borderRadius};
+        color: ${variables.primaryColor};
+        padding: 0.5em 1em;
+        cursor: pointer;
+        transition: background-color ${variables.transitionDuration}, color ${variables.transitionDuration}, transform ${variables.transitionDuration};
+
+        &:hover {
+            background-color: ${variables.primaryColor};
+            color: ${variables.backgroundColor};
+            transform: scale(1.05);
+        }
+    `;
+
+    const TodoListItem = ({ todo, onRemovePressed, onCompletedPressed }) => (
+        <TodoItemContainer>
+            <TodoItemTitle>{todo.text}</TodoItemTitle>
+            <ButtonsContainer>
+                {todo.isCompleted ? null : (
+                    <Button onClick={() => onCompletedPressed(todo.id)} className="completed-button">
+                        Mark As Completed
+                    </Button>
+                )}
+                <Button onClick={() => onRemovePressed(todo.id)} className="remove-button">
+                    Remove
+                </Button>
+            </ButtonsContainer>
+        </TodoItemContainer>
+    );
+
+    export default TodoListItem;
 
     ```
 
--
+- `NewTodoForm.js`
 
     ```jsx
+    import styled from "styled-components";
+    import variables from "./styleVariables";
+
+    const FormContainer = styled.div`
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: ${variables.padding};
+    `;
+
+    const Input = styled.input`
+        flex: 1;
+        padding: ${variables.padding};
+        border: 2px solid ${variables.primaryColor};
+        border-radius: ${variables.borderRadius};
+        background-color: ${variables.backgroundColor};
+        color: ${variables.textColor};
+        font-family: ${variables.fontFamily};
+        margin-right: ${variables.padding};
+        transition: border-color ${variables.transitionDuration}, box-shadow ${variables.transitionDuration};
+
+        &:focus {
+            border-color: ${variables.primaryColor};
+            box-shadow: ${variables.glowShadow};
+        }
+    `;
+
+    const Button = styled.button`
+        background-color: ${variables.buttonBackgroundColor};
+        border: 2px solid ${variables.primaryColor};
+        border-radius: ${variables.borderRadius};
+        color: ${variables.primaryColor};
+        padding: ${variables.padding};
+        cursor: pointer;
+        transition: background-color ${variables.transitionDuration}, color ${variables.transitionDuration}, transform ${variables.transitionDuration};
+
+        &:hover {
+            background-color: ${variables.primaryColor};
+            color: ${variables.backgroundColor};
+            transform: scale(1.1);
+        }
+    `;
+
+    const NewTodoForm = ({ todos, onCreatePressed }) => {
+    	...
+      return (
+        <FormContainer>
+          <Input
+            type="text"
+            placeholder="Enter New Todo Here!"
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+          />
+          <Button
+            onClick={() => {
+              const isDuplicateText = todos.some(todo => todo.text === inputValue);
+              if (!isDuplicateText) {
+                onCreatePressed(inputValue);
+                setInputValue('');
+              }
+            }}
+          >
+            Create Todo
+          </Button>
+        </FormContainer>
+      );
+    };
+
+    export default connect(mapStateToProps, mapDispatchToProps)(NewTodoForm);
 
     ```
 
--
+- You can also import `createGlobalStyle` from the styled-components library to make components for the `html` and `body` elements.
+    - These tags do not have to wrap around your app, just one tag.
+- `App.js`
 
     ```jsx
+    import React from "react";
+    import TodoList from "./components/TodoList";
+    import styled, { createGlobalStyle } from "styled-components";
+
+    const BodyStyle = createGlobalStyle`
+      body {
+        background-color: #222222;
+        color: whitesmoke;
+        margin: 0;
+        padding: 0;
+      }
+    `;
+
+    const AppContainer = styled.div`
+        margin: 1rem;
+        font-family: Arial, Helvetica, sans-serif;
+    `;
+
+    const App = () => (
+      <>
+        <BodyStyle />
+          <AppContainer>
+            <TodoList />
+          </AppContainer>
+      </>
+    );
+
+    export default App;
 
     ```
 
 
 ## Passing props to Styled-Components
 
--
+- `TodoListItem.js`
 
     ```jsx
+    import React from "react";
+    import styled from "styled-components";
+    import variables from "./styleVariables";
 
+    const TodoItemContainer = styled.div.withConfig({
+      shouldForwardProp: (prop) => !['createdAt'].includes(prop),
+    })`
+      background-color: ${variables.backgroundColor};
+      border: 0.15em solid ${variables.primaryColor};
+      border-radius: ${variables.borderRadius};
+      border-bottom: ${props => (new Date(props.createdAt) > new Date(Date.now() - 8640000 * 5)
+        ? '2px solid ${variables.primaryColor}'
+        : '2px solid red')};
+      padding: ${variables.padding};
+      margin-bottom: ${variables.marginBottom};
+      color: ${variables.textColor};
+      font-family: ${variables.fontFamily};
+    `;
+
+    const TodoItemTitle = styled.h3`
+      margin: 0;
+      color: ${variables.primaryColor};
+    `;
+
+    const ButtonsContainer = styled.div`
+      display: flex;
+      justify-content: space-between;
+      margin-top: ${variables.marginBottom};
+    `;
+
+    const Button = styled.button`
+      background-color: ${variables.buttonBackgroundColor};
+      border: 0.15em solid ${variables.primaryColor};
+      border-radius: ${variables.borderRadius};
+      color: ${variables.primaryColor};
+      padding: 0.5em 1em;
+      cursor: pointer;
+      transition: background-color ${variables.transitionDuration}, color ${variables.transitionDuration}, transform ${variables.transitionDuration};
+
+      &:hover {
+        background-color: ${variables.primaryColor};
+        color: ${variables.backgroundColor};
+        transform: scale(1.05);
+      }
+    `;
+
+    const TodoListItem = ({ todo, onRemovePressed, onCompletedPressed }) => (
+      <TodoItemContainer createdAt={todo.createdAt}>
+        <TodoItemTitle>{todo.text}</TodoItemTitle>
+        <p>
+          Created&nbsp;
+          {(new Date(todo.createdAt)).toLocaleDateString()}
+        </p>
+        <ButtonsContainer>
+          {todo.isCompleted ? null : (
+            <Button onClick={() => onCompletedPressed(todo.id)} className="completed-button">
+              Mark As Completed
+            </Button>
+          )}
+          <Button onClick={() => onRemovePressed(todo.id)} className="remove-button">
+            Remove
+          </Button>
+        </ButtonsContainer>
+      </TodoItemContainer>
+    );
+
+    export default TodoListItem;
     ```
 
--
-
-    ```jsx
-
-    ```
-
--
-
-    ```jsx
-
-    ```
-
+- The `createdAt` prop is considered an unknown prop as it is not a standard HTML attribute. React will flag unknown props being passed threw the DOM.
+    - Use `shouldForwardProp` on the function (in this case, a stylized component) to filter out the unknown prop.
 
 ## Extending Styled-Components
 
--
+- `TodoListItem.js`
 
     ```jsx
+    import React from "react";
+    import styled from "styled-components";
+    import variables from "./styleVariables";
 
-    ```
+    const TodoItemContainer = styled.div`
+      background-color: ${variables.backgroundColor};
+      border: 0.15em solid ${variables.primaryColor};
+      border-radius: ${variables.borderRadius};
+      padding: ${variables.padding};
+      margin-bottom: ${variables.marginBottom};
+      color: ${variables.textColor};
+      font-family: ${variables.fontFamily};
+    `;
 
--
+    const TodoItemContainerWithWarning = styled(TodoItemContainer).withConfig({
+      shouldForwardProp: (prop) => !['createdAt'].includes(prop),
+    })`
+      border-bottom: ${props => (new Date(props.createdAt) > new Date(Date.now() - 8640000 * 5)
+        ? `2px solid green`
+        : '2px solid red')};
+    `;
 
-    ```jsx
+    const TodoItemTitle = styled.h3`
+      margin: 0;
+      color: ${variables.primaryColor};
+    `;
 
-    ```
+    const ButtonsContainer = styled.div`
+      display: flex;
+      justify-content: space-between;
+      margin-top: ${variables.marginBottom};
+    `;
 
--
+    const Button = styled.button`
+      background-color: ${variables.buttonBackgroundColor};
+      border: 0.15em solid ${variables.primaryColor};
+      border-radius: ${variables.borderRadius};
+      color: ${variables.primaryColor};
+      padding: 0.5em 1em;
+      cursor: pointer;
+      transition: background-color ${variables.transitionDuration}, color ${variables.transitionDuration}, transform ${variables.transitionDuration};
 
-    ```jsx
+      &:hover {
+        background-color: ${variables.primaryColor};
+        color: ${variables.backgroundColor};
+        transform: scale(1.05);
+      }
+    `;
+
+    const TodoListItem = ({ todo, onRemovePressed, onCompletedPressed }) => {
+      const Container = todo.isCompleted ? TodoItemContainer : TodoItemContainerWithWarning;
+
+      return (
+        <Container {...(todo.isCompleted ? {} : { createdAt: todo.createdAt })}>
+          <TodoItemTitle>{todo.text}</TodoItemTitle>
+          <p>
+            Created&nbsp;
+            {(new Date(todo.createdAt)).toLocaleDateString()}
+          </p>
+          <ButtonsContainer>
+            {todo.isCompleted ? null : (
+              <Button onClick={() => onCompletedPressed(todo.id)} className="completed-button">
+                Mark As Completed
+              </Button>
+            )}
+            <Button onClick={() => onRemovePressed(todo.id)} className="remove-button">
+              Remove
+            </Button>
+          </ButtonsContainer>
+        </Container>
+      );
+    };
+
+    export default TodoListItem;
 
     ```
 
@@ -1441,10 +1815,139 @@
 
 ## Testing React ecosystems
 
+- `npm install --save-dev mocha chai`
+- `npm install --save-dev @babel/register`
+- In our `components` directory, create a new directory called `tests`
+- Change the “test” section under “scripts” in `package.json` to this:
+    - `"test": "mocha \"src/**/*.test.js\" --require @babel/register --recursive”`
+- Just type `npm run test` to run tests.
+
 ## Testing Reducers
+
+- `reducers.test.js`
+
+    ```jsx
+    import { expect } from "chai";
+    import { todos } from "../reducers.js";
+
+    describe('The todos reducer', () => {
+        it('Adds a new todo when CREATE_TODO action is received', () => {
+            const fakeTodo = { text: 'hello', isCompleted: false };
+            const fakeAction = {
+                type: 'CREATE_TODO',
+                payload: {
+                    todo: fakeTodo,
+                },
+            };
+            const originalState = { isLoading: false, data: [] };
+            const expected = {
+                isLoading: false,
+                data: [fakeTodo],
+            };
+            const actual = todos(originalState, fakeAction);
+
+            expect(actual).to.deep.equal(expected);
+        });
+    });
+    ```
+
 
 ## Testing Redux Thunks
 
+- `npm install --save-dev sinon node-fetch fetch-mock`
+- `thunks.test.js`
+
+    ```jsx
+    import 'node-fetch';
+    import fetchMock from 'fetch-mock';
+    import { expect } from 'chai';
+    import sinon from 'sinon';
+    import { loadTodos } from '../thunks';
+
+    describe('The loadTodos thunk', () => {
+        it('Dispatches the correct actions in the success scenario', async () => {
+            const fakeDispatch = sinon.spy();
+
+            const fakeTodos = [{ text: '1' }, { text: '2' }];
+            fetchMock.get('http://localhost:8080/todos', fakeTodos);
+
+            const expectedFirstAction = { type: 'LOAD_TODOS_IN_PROGRESS' };
+            const expectedSecondAction = {
+                type: 'LOAD_TODOS_SUCCESS',
+                payload: {
+                    todos: fakeTodos,
+                },
+            };
+
+            await loadTodos()(fakeDispatch);
+
+            expect(fakeDispatch.getCall(0).args[0]).to.deep.equal(expectedFirstAction);
+            expect(fakeDispatch.getCall(1).args[0]).to.deep.equal(expectedSecondAction);
+
+            fetchMock.reset();
+        });
+    });
+    ```
+
+
 ## Testing Selectors
 
+- `selectors.test.js`
+
+    ```jsx
+    import { expect } from 'chai';
+    import { getCompletedTodos } from '../selectors';
+
+    describe('The getCompletedTodos selector', () => {
+        it('Returns only completed todos', () => {
+            const fakeTodos = [{
+                text: 'Say Hello',
+                isCompleted: true,
+            }, {
+                text: 'Say Goodbye',
+                isCompleted: false,
+            }, {
+                text: 'Climb Mount Everest',
+                isCompleted: false,
+            }];
+            const expected = [{
+                text: 'Say Hello',
+                isCompleted: true,
+            }];
+            const actual = getCompletedTodos.resultFunc(fakeTodos);
+
+            expect(actual).to.deep.equal(expected);
+        });
+    });
+    ```
+
+
 ## Testing Styled-Components
+
+- `TodoListItem.test.js`
+
+    ```jsx
+    import { expect } from 'chai';
+    import { getBorderStyleForDate } from '../TodoListItem';
+
+    describe('getBorderStyleForDate', () => {
+        it('returns none when the date is less than five days ago', () => {
+            const today = Date.now();
+            const recentDate = new Date(Date.now() - 86400000 * 3);
+
+            const expected = 'none';
+            const actual = getBorderStyleForDate(recentDate, today);
+
+            expect(actual).to.equal(expected);
+        });
+        it('returns a border when the date is more than five days ago', () => {
+            const today = Date.now();
+            const recentDate = new Date(Date.now() - 86400000 * 7);
+
+            const expected = '2px solid red';
+            const actual = getBorderStyleForDate(recentDate, today);
+
+            expect(actual).to.equal(expected);
+        });
+    });
+    ```

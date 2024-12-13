@@ -11,3 +11,14 @@
     font-family: var(--font-family);
     box-shadow: var(--box-shadow);
 }
+
+.section {
+    margin-bottom: var(--padding);
+}
+
+.title {
+    background-color: var(--primary-color);
+    color: var(--secondary-background-color);
+    padding: var(--padding);
+    border-radius: var(--border-radius);
+}

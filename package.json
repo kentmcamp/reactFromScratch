@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "npx webpack-dev-server --mode development",
     "build": "npx webpack --mode development",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha \"src/**/*.test.js\" --require @babel/register --recursive"
   },
   "keywords": [],
   "author": "",
@@ -17,8 +17,14 @@
     "@babel/plugin-transform-runtime": "^7.25.9",
     "@babel/preset-env": "^7.26.0",
     "@babel/preset-react": "^7.26.3",
+    "@babel/register": "^7.25.9",
     "babel-loader": "^9.2.1",
+    "chai": "^5.1.2",
     "css-loader": "^7.1.2",
+    "fetch-mock": "^12.2.0",
+    "mocha": "^11.0.1",
+    "node-fetch": "^3.3.2",
+    "sinon": "^19.0.2",
     "style-loader": "^4.0.0",
     "webpack": "^5.97.1",
     "webpack-cli": "^5.1.4",
@@ -26,6 +32,7 @@
   },
   "dependencies": {
     "@babel/runtime": "^7.26.0",
+    "components": "^0.1.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-redux": "^8.0.0",
@@ -33,6 +40,8 @@
     "redux-devtools-extension": "^2.13.9",
     "redux-persist": "^6.0.0",
     "redux-thunk": "^2.3.0",
-    "reselect": "^5.1.1"
+    "reselect": "^5.1.1",
+    "styled": "^1.0.0",
+    "styled-components": "^6.1.13"
   }
 }
