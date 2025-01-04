@@ -8,6 +8,7 @@
     "test": "mocha \"src/**/*.test.js\" --require @babel/register --recursive"
   },
   "keywords": [],
+  "homepage": "https://kentmcamp.github.io/reactFromScratch/",
   "author": "",
   "license": "ISC",
   "description": "",
